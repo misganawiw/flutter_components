@@ -226,6 +226,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      theme: ThemeData(
+        useMaterial3: true,
+        primarySwatch: Colors.blue,
+      ),
+      debugShowCheckedModeBanner: false,
       home: onboardingShown ? SplashScreen() : OnboardingPage(),
     );
   }
@@ -255,19 +260,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        leading: _currentPage != 0
-            ? IconButton(
-                icon: Icon(Icons.arrow_back),
-                onPressed: () {
-                  _pageController.previousPage(
-                    duration: Duration(milliseconds: 500),
-                    curve: Curves.ease,
-                  );
-                },
-              )
-            : null,
-      ),
       body: PageView(
         controller: _pageController,
         onPageChanged: (index) {
@@ -337,7 +329,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
   void _finishOnboarding() {
     // Implement what to do when the user finishes onboarding
     // For example, you can navigate to the home screen:
-    // Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => HomeScreen()));
+    Navigator.pushReplacement(
+        context, MaterialPageRoute(builder: (context) => SplashScreen()));
   }
 }
 
@@ -396,6 +389,7 @@ class SplashScreen extends StatelessWidget {
     );
   }
 }
+
 ```
 
 
