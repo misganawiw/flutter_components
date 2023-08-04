@@ -210,163 +210,233 @@ import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  bool onboardingShown = prefs.getBool('onboarding_shown') ?? false;
-
-  runApp(MyApp(onboardingShown: onboardingShown));
+void main() {
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  final bool onboardingShown;
-
-  MyApp({required this.onboardingShown});
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      theme: ThemeData(
-        useMaterial3: true,
-        primarySwatch: Colors.blue,
+      title: 'Onboarding App',
+      home: FutureBuilder<bool>(
+        future: _checkFirstSeen(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return SplashScreen(); // Show the splash screen while checking onboarding status
+          } else {
+            if (snapshot.data != true) {
+              return OnboardingScreen(); // Show the splash screen after onboarding is completed
+            } else {
+              return SplashScreen(); // Show onboarding screens
+            }
+          }
+        },
       ),
-      debugShowCheckedModeBanner: false,
-      home: onboardingShown ? SplashScreen() : OnboardingPage(),
+      theme: ThemeData(
+        //primaryColor: Colors.orange, // Set the primary color to orange
+        useMaterial3: true,
+      ),
     );
+  }
+
+  Future<bool> _checkFirstSeen() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    bool isOnboardingCompleted =
+        prefs.getBool('isOnboardingCompleted') ?? false;
+    return isOnboardingCompleted;
   }
 }
 
-class OnboardingPage extends StatefulWidget {
+class OnboardingScreen extends StatefulWidget {
   @override
-  _OnboardingPageState createState() => _OnboardingPageState();
+  _OnboardingScreenState createState() => _OnboardingScreenState();
 }
 
-class _OnboardingPageState extends State<OnboardingPage> {
+class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController(initialPage: 0);
   int _currentPage = 0;
-  bool _isLastPage = false;
+  int _numPages = 3;
+
+  final List<String> titles = [
+    'Welcome to Onboarding Screen 1',
+    'Welcome to Onboarding Screen 2',
+    'Welcome to Onboarding Screen 3',
+  ];
+
+  final List<String> descriptions = [
+    'This is the description for Onboarding Screen 1.',
+    'This is the description for Onboarding Screen 2.',
+    'This is the description for Onboarding Screen 3.',
+  ];
 
   @override
   void initState() {
     super.initState();
-    _setOnboardingStatus();
   }
 
-  Future<void> _setOnboardingStatus() async {
+  Future<void> _finishedOnboarding() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setBool('onboarding_shown', true);
+    prefs.setBool('isOnboardingCompleted', true);
+  }
+
+  void _onPageChanged(int page) {
+    setState(() {
+      _currentPage = page;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: PageView(
-        controller: _pageController,
-        onPageChanged: (index) {
-          setState(() {
-            _currentPage = index;
-            _isLastPage =
-                index == 2; // Update this value if you have more pages
-          });
-        },
+      // backgroundColor: Colors.orange, // Set the background color to orange
+      body: Stack(
         children: [
-          OnboardingScreen(
-            title: 'Fast Delivery',
-            description: 'Get your food delivered in minutes!',
-            animationUrl:
-                'https://assets1.lottiefiles.com/private_files/lf30_QLsD8M.json',
-          ),
-          OnboardingScreen(
-            title: 'Wide Variety',
-            description: 'Choose from a wide range of delicious cuisines.',
-            animationUrl:
-                'https://assets1.lottiefiles.com/private_files/lf30_QLsD8M.json',
-          ),
-          OnboardingScreen(
-            title: 'Contactless Delivery',
-            description: 'Safe and contactless food delivery to your doorstep.',
-            animationUrl:
-                'https://assets1.lottiefiles.com/private_files/lf30_QLsD8M.json',
-          ),
-        ],
-      ),
-      bottomNavigationBar: _buildBottomNavigationBar(),
-    );
-  }
-
-  Widget _buildBottomNavigationBar() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          if (_currentPage != 0)
-            ElevatedButton(
-              onPressed: () {
-                _pageController.previousPage(
-                  duration: Duration(milliseconds: 500),
-                  curve: Curves.ease,
+          Positioned(
+            bottom: 16,
+            left: 0,
+            right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(_numPages, (index) {
+                return AnimatedContainer(
+                  duration: Duration(milliseconds: 300),
+                  width: _currentPage == index ? 12 : 8,
+                  height: 8,
+                  margin: EdgeInsets.symmetric(horizontal: 4),
+                  decoration: BoxDecoration(
+                    color: _currentPage == index ? Colors.orange : Colors.grey,
+                    shape: BoxShape.circle,
+                  ),
                 );
-              },
-              child: Text('Previous'),
+              }),
             ),
-          ElevatedButton(
-            onPressed: _isLastPage ? _finishOnboarding : _nextPage,
-            child: Text(_isLastPage ? 'Finish' : 'Next'),
+          ),
+          PageView.builder(
+            controller: _pageController,
+            onPageChanged: _onPageChanged,
+            itemCount: _numPages,
+            itemBuilder: (context, index) {
+              return _buildOnboardingPage(index);
+            },
           ),
         ],
       ),
     );
   }
 
-  void _nextPage() {
-    _pageController.nextPage(
-      duration: Duration(milliseconds: 500),
-      curve: Curves.ease,
-    );
-  }
+  Widget _buildOnboardingPage(int index) {
+    String title = titles[index];
+    String description = descriptions[index];
+    String animationAsset = '';
 
-  void _finishOnboarding() {
-    // Implement what to do when the user finishes onboarding
-    // For example, you can navigate to the home screen:
-    Navigator.pushReplacement(
-        context, MaterialPageRoute(builder: (context) => SplashScreen()));
-  }
-}
+    switch (index) {
+      case 0:
+        animationAsset = "assets/animationone.json";
+        break;
+      case 1:
+        animationAsset = "assets/animationtwo.json";
+        break;
+      case 2:
+        animationAsset = "assets/animationthree.json";
+        break;
+      default:
+        animationAsset = '';
+    }
 
-class OnboardingScreen extends StatelessWidget {
-  final String title;
-  final String description;
-  final String animationUrl;
+    bool isFirstPage = index == 0;
+    bool isLastPage = index == _numPages - 1;
 
-  OnboardingScreen(
-      {required this.title,
-      required this.description,
-      required this.animationUrl});
-
-  @override
-  Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Lottie.network(
-            animationUrl,
-            width: 200,
-            height: 200,
-            fit: BoxFit.cover,
-          ),
-          SizedBox(height: 32),
+          Lottie.asset(animationAsset, height: 200, width: 200),
+          SizedBox(height: 30),
           Text(
             title,
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.orange, // Set the title color to white
+            ),
           ),
           SizedBox(height: 16),
           Text(
             description,
+            style: TextStyle(
+                fontSize: 16,
+                color: Colors.orange), // Set the description color to white
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 18),
+          ),
+          SizedBox(height: 30),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (!isFirstPage)
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: ElevatedButton(
+                    onPressed: () {
+                      _pageController.previousPage(
+                        duration: Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
+                    },
+                    child: Text('<'),
+                    style: ElevatedButton.styleFrom(
+                      primary: Colors
+                          .white, // Set the button background color to white
+                      onPrimary:
+                          Colors.orange, // Set the button text color to orange
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 50, vertical: 12), // Adjust the spacing
+                    ),
+                  ),
+                ),
+              if (!isLastPage)
+                ElevatedButton(
+                  onPressed: () {
+                    _pageController.nextPage(
+                      duration: Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                    );
+                  },
+                  child: Text('>'),
+                  style: ElevatedButton.styleFrom(
+                    primary: Colors
+                        .white, // Set the button background color to white
+                    onPrimary:
+                        Colors.orange, // Set the button text color to orange
+                    padding: EdgeInsets.symmetric(
+                        horizontal: 50, vertical: 12), // Adjust the spacing
+                  ),
+                ),
+              if (isLastPage)
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: ElevatedButton(
+                    onPressed: () {
+                      _finishedOnboarding();
+                      // Navigate to the splash screen after onboarding is completed
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => SplashScreen()),
+                      );
+                    },
+                    child: Text('Finish'),
+                    style: ElevatedButton.styleFrom(
+                      primary: Colors
+                          .white, // Set the button background color to white
+                      onPrimary:
+                          Colors.orange, // Set the button text color to orange
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 50, vertical: 12), // Adjust the spacing
+                    ),
+                  ),
+                ),
+            ],
           ),
         ],
       ),
@@ -374,25 +444,14 @@ class OnboardingScreen extends StatelessWidget {
   }
 }
 
-class SplashScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: OnboardingScreen(
-          title: 'Fast Delivery',
-          description: 'Get your food delivered in minutes!',
-          animationUrl:
-              'https://assets1.lottiefiles.com/private_files/lf30_QLsD8M.json',
-        ), // Replace this with your splash screen UI
-      ),
-    );
-  }
-}
 
 ```
 
+in order to use it on your code just follow the following steps 
 
+step 1.download 3 json lottie animation and name them animationone.json animationtwo.json animationthree.json and also make sure that you add them in the assets folder </br>
+step 2. copy the above code </br>
+step 3. add lottie , shared preference and others that indicate red light 
 
 
 
