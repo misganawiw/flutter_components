@@ -4,10 +4,6 @@ code snippet meaning: A code snippet is a small portion of code that represents 
 
 
 
-
-
-A new Flutter project.
-
 ## Getting Started
 
 This project is a starting point for a Flutter application.
