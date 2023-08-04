@@ -1,4 +1,10 @@
-# flutter_application_1
+# የፍለተር አፕሊኬሽን ለመገንባት የምንጠቀማቸውን flutter widgets እንደ snippet አዘጋጅቼላችኋለው
+
+code snippet meaning: A code snippet is a small portion of code that represents a specific functionality or task.
+
+
+
+
 
 A new Flutter project.
 
