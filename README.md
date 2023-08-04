@@ -2,6 +2,15 @@
 
 code snippet meaning: A code snippet is a small portion of code that represents a specific functionality or task.
 
+###### onboarding
+###### splash
+###### signup and signin with reset
+###### bottom navigation 
+###### listview and detail view
+###### add to cart feature
+###### payment feature
+###### map feature 
+
 
 
 ## Getting Started
